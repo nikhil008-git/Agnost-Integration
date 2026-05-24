@@ -1,26 +1,77 @@
-import { generateText } from 'ai';
-import { sendToAgnost, type AgnostConfig } from './agnost';
+import { generateText, streamText } from 'ai';
+import type { AgnostConfig } from './agnost.js';
+import {
+  extractInput,
+  extractModel,
+  reportFailure,
+  reportSuccess,
+} from './utils.js';
 
-export function trackVercelAI(config: AgnostConfig) {
-    const originalGenerateText = generateText;
+export interface VercelAITracking {
+  generateText: typeof generateText;
+  streamText: typeof streamText;
+}
 
-    return async (params: Parameters<typeof generateText>[0]) => {
-const start = Date.now();
-try{
-    const result = await originalGenerateText(params);
-    await sendToAgnost(config, {
-        orgId: config.orgId,
-        input: String(params.prompt || ""),
+export function trackVercelAI(config: AgnostConfig): VercelAITracking {
+  return {
+    generateText: createTrackedGenerateText(config),
+    streamText: createTrackedStreamText(config),
+  };
+}
+
+function createTrackedGenerateText(config: AgnostConfig): typeof generateText {
+  return async (params) => {
+    const start = Date.now();
+    const input = extractInput(params);
+    const model = extractModel(params.model);
+
+    try {
+      const result = await generateText(params);
+      await reportSuccess(config, {
+        input,
         output: result.text,
-        model: String(params.model || ""),
+        model,
         latencyMs: Date.now() - start,
-        timestamp: new Date().toISOString(),
-    });
-    return result; 
-}
-catch(err){
-    console.error('Error tracking Vercel AI:', err);
-    throw err;
-}
+      });
+      return result;
+    } catch (err) {
+      await reportFailure(config, {
+        input,
+        model,
+        latencyMs: Date.now() - start,
+        error: err,
+      });
+      throw err;
     }
+  };
+}
+
+function createTrackedStreamText(config: AgnostConfig): typeof streamText {
+  return (params) => {
+    const start = Date.now();
+    const input = extractInput(params);
+    const model = extractModel(params.model);
+
+    return streamText({
+      ...params,
+      onFinish: async (event) => {
+        await reportSuccess(config, {
+          input,
+          output: event.text,
+          model,
+          latencyMs: Date.now() - start,
+        });
+        await params.onFinish?.(event);
+      },
+      onError: async (event) => {
+        await reportFailure(config, {
+          input,
+          model,
+          latencyMs: Date.now() - start,
+          error: event.error,
+        });
+        await params.onError?.(event);
+      },
+    });
+  };
 }
