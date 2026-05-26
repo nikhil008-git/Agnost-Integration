@@ -28,6 +28,7 @@ export function trackOpenAI(
           output,
           model,
           latencyMs: Date.now() - start,
+          framework: 'openai',
         });
         return result;
       } catch (err) {
@@ -35,6 +36,7 @@ export function trackOpenAI(
           input,
           model,
           latencyMs: Date.now() - start,
+          framework: 'openai',
           error: err,
         });
         throw err;

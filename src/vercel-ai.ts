@@ -5,6 +5,7 @@ import {
   extractModel,
   reportFailure,
   reportSuccess,
+  type PromptLike,
 } from './utils.js';
 
 export interface VercelAITracking {
@@ -22,7 +23,7 @@ export function trackVercelAI(config: AgnostConfig): VercelAITracking {
 function createTrackedGenerateText(config: AgnostConfig): typeof generateText {
   return async (params) => {
     const start = Date.now();
-    const input = extractInput(params);
+    const input = extractInput(params as PromptLike);
     const model = extractModel(params.model);
 
     try {
@@ -32,6 +33,7 @@ function createTrackedGenerateText(config: AgnostConfig): typeof generateText {
         output: result.text,
         model,
         latencyMs: Date.now() - start,
+        framework: 'vercel-ai',
       });
       return result;
     } catch (err) {
@@ -39,6 +41,7 @@ function createTrackedGenerateText(config: AgnostConfig): typeof generateText {
         input,
         model,
         latencyMs: Date.now() - start,
+        framework: 'vercel-ai',
         error: err,
       });
       throw err;
@@ -49,7 +52,7 @@ function createTrackedGenerateText(config: AgnostConfig): typeof generateText {
 function createTrackedStreamText(config: AgnostConfig): typeof streamText {
   return (params) => {
     const start = Date.now();
-    const input = extractInput(params);
+    const input = extractInput(params as PromptLike);
     const model = extractModel(params.model);
 
     return streamText({
@@ -60,6 +63,7 @@ function createTrackedStreamText(config: AgnostConfig): typeof streamText {
           output: event.text,
           model,
           latencyMs: Date.now() - start,
+          framework: 'vercel-ai',
         });
         await params.onFinish?.(event);
       },
@@ -68,6 +72,7 @@ function createTrackedStreamText(config: AgnostConfig): typeof streamText {
           input,
           model,
           latencyMs: Date.now() - start,
+          framework: 'vercel-ai',
           error: event.error,
         });
         await params.onError?.(event);

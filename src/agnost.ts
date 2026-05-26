@@ -11,6 +11,8 @@ export interface AgnostPush {
   output: string;
   model: string;
   latencyMs: number;
+  framework?: string;
+  sessionId?: string;
   error?: string;
   timestamp: string;
 }

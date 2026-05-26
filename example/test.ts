@@ -4,8 +4,8 @@ import { MockLanguageModelV3 } from 'ai/test';
 import { simulateReadableStream } from 'ai';
 
 const config = {
-  orgId: 'test-org-123',
-  endpoint: 'http://localhost:3000/ingest',
+  orgId: process.env.AGNOST_ORG_ID ?? 'test-org-123',
+  endpoint: process.env.AGNOST_ENDPOINT ?? 'http://localhost:3000/ingest',
 };
 
 const useOpenAI = process.env.USE_OPENAI === 'true';

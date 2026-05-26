@@ -1,9 +1,10 @@
 import { reportToAgnost, type AgnostConfig } from './agnost.js';
 
+/** Loose shape for Vercel AI / similar SDK params — avoids fighting union prompt types. */
 export interface PromptLike {
-  prompt?: string;
-  messages?: ReadonlyArray<{ role: string; content: unknown }>;
-  system?: string;
+  prompt?: unknown;
+  messages?: unknown;
+  system?: unknown;
 }
 
 export function extractInput(params: PromptLike): string {
@@ -11,12 +12,20 @@ export function extractInput(params: PromptLike): string {
     return params.prompt;
   }
 
-  if (params.messages && params.messages.length > 0) {
+  if (Array.isArray(params.prompt) && params.prompt.length > 0) {
+    return JSON.stringify(params.prompt);
+  }
+
+  if (Array.isArray(params.messages) && params.messages.length > 0) {
     return JSON.stringify(params.messages);
   }
 
   if (typeof params.system === 'string' && params.system.length > 0) {
     return params.system;
+  }
+
+  if (Array.isArray(params.system) && params.system.length > 0) {
+    return JSON.stringify(params.system);
   }
 
   return '';
@@ -43,13 +52,18 @@ export function extractModel(model: unknown): string {
   return String(model);
 }
 
+export interface ReportFields {
+  input: string;
+  model: string;
+  latencyMs: number;
+  framework?: string;
+  sessionId?: string;
+}
+
 export async function reportSuccess(
   config: AgnostConfig,
-  fields: {
-    input: string;
+  fields: ReportFields & {
     output: string;
-    model: string;
-    latencyMs: number;
   },
 ): Promise<void> {
   await reportToAgnost(config, {
@@ -59,15 +73,14 @@ export async function reportSuccess(
     model: fields.model,
     latencyMs: fields.latencyMs,
     timestamp: new Date().toISOString(),
+    ...(fields.framework !== undefined ? { framework: fields.framework } : {}),
+    ...(fields.sessionId !== undefined ? { sessionId: fields.sessionId } : {}),
   });
 }
 
 export async function reportFailure(
   config: AgnostConfig,
-  fields: {
-    input: string;
-    model: string;
-    latencyMs: number;
+  fields: ReportFields & {
     error: unknown;
   },
 ): Promise<void> {
@@ -79,5 +92,7 @@ export async function reportFailure(
     latencyMs: fields.latencyMs,
     error: fields.error instanceof Error ? fields.error.message : String(fields.error),
     timestamp: new Date().toISOString(),
+    ...(fields.framework !== undefined ? { framework: fields.framework } : {}),
+    ...(fields.sessionId !== undefined ? { sessionId: fields.sessionId } : {}),
   });
 }

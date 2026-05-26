@@ -32,6 +32,7 @@ export function trackMastraAgent<T extends TrackableMastraAgent>(
         output: result.text ?? JSON.stringify(result),
         model,
         latencyMs: Date.now() - start,
+        framework: 'mastra',
       });
       return result;
     } catch (err) {
@@ -39,6 +40,7 @@ export function trackMastraAgent<T extends TrackableMastraAgent>(
         input,
         model,
         latencyMs: Date.now() - start,
+        framework: 'mastra',
         error: err,
       });
       throw err;
