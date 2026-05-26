@@ -3,7 +3,6 @@
 **Track B submission** — drop-in telemetry for [Agnost](https://agnost.ai/) from **Vercel AI**, **OpenAI**, and **Mastra** agents.
 
 Full design rationale: **[REASONING.md](./REASONING.md)**  
-Email reply template: **[SUBMISSION_REPLY.md](./SUBMISSION_REPLY.md)**
 
 ## System overview
 
