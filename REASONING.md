@@ -1,8 +1,6 @@
 # Track B — Agnost Integration Mode
 
-**Candidate submission:** Integration SDK for Vercel AI, OpenAI, and Mastra agents  
-**Repo:** `agnost-integrations`  
-**Diagram:** Add screenshot of the block diagram from README / below mermaid when submitting.
+** submission:** Integration SDK for Vercel AI, OpenAI, and Mastra agents  
 
 ---
 
